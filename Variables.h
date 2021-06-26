@@ -18,7 +18,7 @@
 #define VAR_NEW             10000
 
 enum RuaVarType {
-    Boolean, Inteager, Float, String, List, Class, Function
+    Boolean, Integer, Float, String, List, Class, Function
 };
 
 typedef bool                                    ruaBool;

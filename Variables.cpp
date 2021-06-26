@@ -9,7 +9,7 @@ uint RuaVarManager::CopyVar(uint id) {
     if (rv == nullptr) return 0;
     RuaData rd;
     switch (rv->type) {
-    case Boolean: case Inteager: case Float:
+    case Boolean: case Integer: case Float:
         rd = rv->data; break;
     case String:
         rd.s = new ruaString(*rv->data.s);break;
@@ -33,7 +33,7 @@ uint RuaVarManager::AllocateVar(RuaVarType type, bool isConstant) {
     case Boolean:
         data.b = false;
         return AllocateVar(type, isConstant, data);
-    case Inteager:
+    case Integer:
         data.i = 0;
         return AllocateVar(type, isConstant, data);
     case Float:
@@ -116,7 +116,7 @@ std::string RuaVarManager::to_string(uint id, bool full) {
     case Boolean:
         ret += p->data.b ? "true" : "false";
         break;
-    case Inteager:
+    case Integer:
         ret += std::to_string(p->data.i);
         break;
     case Float:

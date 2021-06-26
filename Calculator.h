@@ -16,9 +16,9 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b + v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			rd.i = v1->data.i + v2->data.i;
-			return vm->AllocateVar(Inteager, false, rd);
+			return vm->AllocateVar(Integer, false, rd);
 		case Float:
 			if (v2->type == Float)
 				rd.d = v1->data.d + v2->data.d;
@@ -43,10 +43,10 @@ namespace RUA {
 		RuaData rd; uint ret;
 		switch (v1->type)
 		{
-		case Inteager:
-			if (v2->type == Inteager || v2->type == Boolean) {
+		case Integer:
+			if (v2->type == Integer || v2->type == Boolean) {
 				rd.i = v1->data.i - v2->data.i;
-				return vm->AllocateVar(Inteager, false, rd);
+				return vm->AllocateVar(Integer, false, rd);
 			}
 			else if (v2->type == Float) {
 				rd.d = v1->data.i - v2->data.d;
@@ -59,7 +59,7 @@ namespace RUA {
 		case Float:
 			if (v2->type == Float)
 				rd.d = v1->data.d - v2->data.d;
-			else if (v2->type == Inteager || v2->type == Boolean)
+			else if (v2->type == Integer || v2->type == Boolean)
 				rd.d = v1->data.d - v2->data.i;
 			else {
 				EasyLog::Write("Runtime internal operator - (Error): int minus right ope!");
@@ -82,9 +82,9 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b * v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			rd.i = v1->data.i * v2->data.i;
-			return vm->AllocateVar(Inteager, false, rd);
+			return vm->AllocateVar(Integer, false, rd);
 		case Float:
 			if (v2->type == Float)
 				rd.d = v1->data.d * v2->data.d;
@@ -92,7 +92,7 @@ namespace RUA {
 				rd.d = v1->data.d * v2->data.i;
 			return vm->AllocateVar(Float, false, rd);
 		case String:
-			if (v2->type == Inteager || v2->type == Boolean) {
+			if (v2->type == Integer || v2->type == Boolean) {
 				rd.s = new std::string();
 				for (int i = 0; i < v2->data.i; i++) {
 					rd.s->append(*v1->data.s);
@@ -115,10 +115,10 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b / v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			if (v1->data.i % v2->data.i == 0) {
 				rd.i = v1->data.i / v2->data.i;
-				return vm->AllocateVar(Inteager, false, rd);
+				return vm->AllocateVar(Integer, false, rd);
 			}
 			else {
 				rd.d = (ruaFloat)v1->data.i / v2->data.i;
@@ -142,9 +142,9 @@ namespace RUA {
 		RuaData rd; uint ret;
 		switch (v1->type)
 		{
-		case Boolean: case Inteager:
+		case Boolean: case Integer:
 			rd.i = v1->data.i / v2->data.i;
-			return vm->AllocateVar(Inteager, false, rd);
+			return vm->AllocateVar(Integer, false, rd);
 		default:
 			EasyLog::Write("Runtime internal operator \\ (Error): int divide");
 			exit(-1);
@@ -160,9 +160,9 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b << v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			rd.i = v1->data.i << v2->data.i;
-			return vm->AllocateVar(Inteager, false, rd);
+			return vm->AllocateVar(Integer, false, rd);
 		default:
 			EasyLog::Write("Runtime internal operator << (Error)");
 			exit(-1);
@@ -178,9 +178,9 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b >> v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			rd.i = v1->data.i >> v2->data.i;
-			return vm->AllocateVar(Inteager, false, rd);
+			return vm->AllocateVar(Integer, false, rd);
 		default:
 			EasyLog::Write("Runtime internal operator >> (Error)");
 			exit(-1);
@@ -193,8 +193,8 @@ namespace RUA {
 		RuaData rd; uint ret;
 		switch (v1->type)
 		{
-		case Boolean: case Inteager:
-			if (v2->type == Inteager || v2->type == Boolean) {
+		case Boolean: case Integer:
+			if (v2->type == Integer || v2->type == Boolean) {
 				rd.b = v1->data.i < v2->data.i;
 			}
 			else if (v2->type == Float) {
@@ -208,7 +208,7 @@ namespace RUA {
 		case Float:
 			if (v2->type == Float)
 				rd.b = v1->data.d < v2->data.d;
-			else if (v2->type == Inteager || v2->type == Boolean)
+			else if (v2->type == Integer || v2->type == Boolean)
 				rd.b = v1->data.d < v2->data.i;
 			else {
 				EasyLog::Write("Runtime internal operator < (Error): int minus right ope!");
@@ -230,7 +230,7 @@ namespace RUA {
 		{
 		case Boolean:
 			rd.b = v1->data.b == v2->data.b; break;
-		case Inteager:
+		case Integer:
 			rd.b = v1->data.i == v2->data.i; break;
 		case Float:
 			if (v2->type == Float)
@@ -257,8 +257,8 @@ namespace RUA {
 		RuaData rd; uint ret;
 		switch (v1->type)
 		{
-		case Boolean: case Inteager:
-			if (v2->type == Inteager || v2->type == Boolean) {
+		case Boolean: case Integer:
+			if (v2->type == Integer || v2->type == Boolean) {
 				rd.b = v1->data.i > v2->data.i;
 			}
 			else if (v2->type == Float) {
@@ -272,7 +272,7 @@ namespace RUA {
 		case Float:
 			if (v2->type == Float)
 				rd.b = v1->data.d > v2->data.d;
-			else if (v2->type == Inteager || v2->type == Boolean)
+			else if (v2->type == Integer || v2->type == Boolean)
 				rd.b = v1->data.d > v2->data.i;
 			else {
 				EasyLog::Write("Runtime internal operator > (Error): int minus right ope!");
@@ -312,9 +312,9 @@ namespace RUA {
 		RuaData rd; uint ret;
 		switch (v1->type)
 		{
-		case Boolean: case Inteager:
+		case Boolean: case Integer:
 			rd.i = v1->data.i % v2->data.i;
-			return vm->AllocateVar(Inteager, false, rd);
+			return vm->AllocateVar(Integer, false, rd);
 		default:
 			EasyLog::Write("Runtime internal operator % (Error)");
 			exit(-1);
@@ -331,7 +331,7 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b && v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			rd.b = v1->data.i && v2->data.i;
 			return vm->AllocateVar(Boolean, false, rd);
 		case Float:
@@ -356,7 +356,7 @@ namespace RUA {
 		case Boolean:
 			rd.b = v1->data.b || v2->data.b;
 			return vm->AllocateVar(Boolean, false, rd);
-		case Inteager:
+		case Integer:
 			rd.b = v1->data.i || v2->data.i;
 			return vm->AllocateVar(Boolean, false, rd);
 		case Float:

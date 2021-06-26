@@ -21,7 +21,7 @@ uint _rua_print(RuaRuntime* rt, uint list_id) {
         RuaVariable* pvar = vm->GetVar(rid);
         switch (pvar->type)
         {
-        case Inteager:
+        case Integer:
             printf("%d", pvar->data.i); break;
         case Float:
             printf("%lf", pvar->data.d); break;
@@ -45,7 +45,7 @@ uint _rua_input(RuaRuntime* rt, uint list_id) {
         RuaVariable* pvar = vm->GetVar(rid);
         switch (pvar->type)
         {
-        case Inteager:
+        case Integer:
             printf("%d", pvar->data.i); break;
         case Float:
             printf("%lf", pvar->data.d); break;
@@ -76,7 +76,7 @@ uint _rua_int(RuaRuntime* rt, uint list_id) {
     RuaData rd;
     switch (pvar->type)
     {
-    case Boolean: case Inteager:
+    case Boolean: case Integer:
         rd.i = pvar->data.i; break;
     case Float:
         rd.i = (ruaInt)floor(pvar->data.d); break;
@@ -94,7 +94,7 @@ uint _rua_int(RuaRuntime* rt, uint list_id) {
         EasyLog::Write("External function int (error): parsing other variables.");
         exit(-1);
     }
-    return vm->AllocateVar(Inteager, false, rd);
+    return vm->AllocateVar(Integer, false, rd);
 }
 
 uint _rua_float(RuaRuntime* rt, uint list_id) {
@@ -109,7 +109,7 @@ uint _rua_float(RuaRuntime* rt, uint list_id) {
     int tmp = 0, i = 0;
     switch (pvar->type)
     {
-    case Boolean: case Inteager:
+    case Boolean: case Integer:
         rd.d = pvar->data.i; break;
     case Float:
         rd.d = pvar->data.d; break;
@@ -139,6 +139,25 @@ uint _rua_str(RuaRuntime* rt, uint list_id) {
     RuaData rd;
     rd.s = new string(vm->to_string(rt->FindRealVar(rl->at(0), false), false));
     return vm->AllocateVar(String, false, rd);
+}
+
+uint _rua_len(RuaRuntime* rt, uint list_id) {
+    auto vm = rt->GetVarManager();
+    ruaList* rl = vm->GetVar(list_id)->data.l;
+    RuaData rd;
+    if (rl->size() != 1) {
+        EasyLog::Write("External function len (error): # of para is not 1.");
+        exit(-1);
+    }
+    auto var = vm->GetVar(rt->FindRealVar(rl->at(0), false));
+    if (var->type == List) {
+        rd.i = var->data.l->size();
+    }
+    else {
+        EasyLog::Write("External function len (error): parameter unsupported.");
+        exit(-1);
+    }
+    return vm->AllocateVar(Integer, false, rd);
 }
 
 
@@ -177,9 +196,10 @@ int main(int argc, char* argv[]) {
         {FUNC_INBUILT, _rua_input,  {} },
         {FUNC_INBUILT, _rua_int,    {} },
         {FUNC_INBUILT, _rua_float,  {} },
-        {FUNC_INBUILT, _rua_str,    {} } };
+        {FUNC_INBUILT, _rua_str,    {} },
+        {FUNC_INBUILT, _rua_len,    {}} };
     const int rfi_n = sizeof(rfi) / sizeof(RuaFuncInfo);
-    string func_name[] = { "print", "input" , "int", "float", "str" };
+    string func_name[] = { "print", "input" , "int", "float", "str", "len" };
     //RuaData rd; rd.f = &rfi1;
     //rrt.SetConstant("print", RuaVariable(Function, rd, 0));
     for (int i = 0; i < rfi_n; i++) {

@@ -134,7 +134,7 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
                     stk.push({ OPE_PUSH_CONST, id });
                     break;
                 case VAR_INTEAGER:
-                    id = m_vm.AllocateVar(Inteager, true, m_tmp);
+                    id = m_vm.AllocateVar(Integer, true, m_tmp);
                     stk.push({OPE_PUSH_CONST, id});
                     break;
                 case VAR_FLOAT:
@@ -359,8 +359,8 @@ int RuaRuntime::runCommand(RuaCommand i) {
         else if (i.cmd == OPE_INDEX) {
             RuaVariable* pvar = m_vm.GetVar((rids[0])), *pv1 = m_vm.GetVar((rids[1]));
             if (pvar->type == List) {
-                if (pv1->type != Inteager) {
-                    EasyLog::Write("Runtime (error): index of list must be Inteager, but found " + std::to_string(pv1->type));
+                if (pv1->type != Integer) {
+                    EasyLog::Write("Runtime (error): index of list must be Integer, but found " + std::to_string(pv1->type));
                     return ERROR;
                 }
                 TOPENV.varstk.push(pvar->data.l->at(pv1->data.i));
