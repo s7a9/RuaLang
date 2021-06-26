@@ -37,7 +37,8 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
             if (prio == 0) NXT
             return sent;
         }
-        if ((m_ti.info == ',' || m_ti.info == ']' || m_ti.info == ')') && prio == 2) {
+        //if ((m_ti.info == ',' || m_ti.info == ']' || m_ti.info == ')') && prio == 2) {
+        if ((m_ti.info == ',' || m_ti.info == ']') && prio == 2) {
             popStack(sent, stk);
             return sent;
         }
@@ -48,6 +49,7 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
             }
             if (stk.empty()) return sent;
             stk.pop();
+            NXT
         }
         else if (m_ti.info == VAR_CLASS) {
             GETCHK('{') NXT
@@ -216,7 +218,7 @@ RuaControlFLow RuaRuntime::parseControlFlow() {
 }
 
 void RuaRuntime::popStack(RuaSentence& rs, std::stack<RuaCommand>& stk) {
-    while (!stk.empty() && 
+    while (!stk.empty() && stk.top().cmd != '(' &&
            m_opeMap[stk.top().cmd].prio <= m_opeMap[m_ti.info].prio) {
         rs.push_back(stk.top());
         stk.pop();
