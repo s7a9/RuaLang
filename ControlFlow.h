@@ -83,7 +83,6 @@ struct RuaControlFLow {
             printf(" ) \n { ");
             cfs[0].Print();
             printf(" }\n");
-        default:
             break;
         }
     }

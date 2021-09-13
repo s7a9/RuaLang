@@ -67,7 +67,11 @@ private:
         {TOK_VAR, VAR_CLASS, "CLASS", "class"},
         {TOK_VAR, VAR_TRUE, "true", "true"},
         {TOK_VAR, VAR_FALSE, "false", "false"},
+
+        {TOK_END, TOK_END, "EOF", "EOF"},
     };
+
+    bool last_is_ope = true;
 
     const int g_n_internal_token = sizeof(g_internal_tokens) / sizeof(TokenInfo);
 
@@ -81,6 +85,8 @@ private:
 
 public:
     RuaParser();
+
+    bool& GetLastIsOpe();
 
     int NewToken(int type, std::string text, std::string name);
 

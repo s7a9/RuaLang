@@ -30,10 +30,11 @@ const RuaOpeInfo g_operator_info[] = {
     {'<', 6, 2}, {OPE_EQUAL, 7, 2}, {'>', 6, 2}, {OPE_LEQ, 6, 2},
     {OPE_GEQ, 6, 2}, {OPE_NEQ, 7, 2}, {'(', 0, 0}, {')', 100, 0},
     {'=', 10, 2}, {'&', 2, 1}, {'.', 1, 2}, {';', 100, 0}, {',', 100, 0},
-    {OPE_NEQ, 7, 2}, {OPE_INDEX, 99, 2}, {'%', 3, 2}, {OPE_AND, 8, 2},
+    {OPE_NEQ, 7, 2}, {OPE_INDEX, 1, 2}, {'%', 3, 2}, {OPE_AND, 8, 2},
     {OPE_OR, 9, 2}, {'{', -1, 0}, {'}', 100, 0}, {OPE_PUSH, 0, 1}, 
     {OPE_PUSH_CONST, 0, 1}, {']', 100, 0}, {3, -1, 0}, {BREAK, 100, 0},
-    {RETURN, 100, 0}, {OPE_DEL, 99, 1}, {OPE_CALL, 1, 2}
+    {RETURN, 100, 0}, {OPE_DEL, 99, 1}, {OPE_CALL, 1, 2},
+    {OPE_NEG, 2, 1}
 };
 
 const int g_n_operator_info = sizeof(g_operator_info) / sizeof(RuaOpeInfo);

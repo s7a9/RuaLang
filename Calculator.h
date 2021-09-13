@@ -5,12 +5,18 @@
 #include "Variables.h"
 #include "Operators.h"
 
+#define CALC_CHECK_PVAR(pvar) if (pvar == nullptr) { \
+		EasyLog::Write("Error Internal operator: Operating on null variable."); \
+		exit(-1);}
+
 namespace RUA {
 
 	uint g_rua_add(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
 		if (v1->type < v2->type) return g_rua_add(vm, v2, v1);
-		RuaData rd; uint ret;
+		RuaData rd;
 		switch (v1->type)
 		{
 		case Boolean:
@@ -39,8 +45,10 @@ namespace RUA {
 	}
 
 	uint g_rua_minus(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
 		case Integer:
@@ -74,9 +82,11 @@ namespace RUA {
 	}
 
 	uint g_rua_multiply(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
 		if (v1->type < v2->type) return g_rua_multiply(vm, v2, v1);
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
 		case Boolean:
@@ -108,23 +118,48 @@ namespace RUA {
 	}
 
 	uint g_rua_divide(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
 		case Boolean:
-			rd.b = v1->data.b / v2->data.b;
-			return vm->AllocateVar(Boolean, false, rd);
+			EasyLog::Write("Runtime internal operator / (Error): divide bool!");
+			exit(-1);
 		case Integer:
-			if (v1->data.i % v2->data.i == 0) {
-				rd.i = v1->data.i / v2->data.i;
-				return vm->AllocateVar(Integer, false, rd);
+			if (v2->type == Integer) {
+				if (v2->data.i == 0) {
+					EasyLog::Write("Runtime internal operator / (Error): divide zero!");
+					exit(-1);
+				}
+				if (v1->data.i % v2->data.i == 0) {
+					rd.i = v1->data.i / v2->data.i;
+					return vm->AllocateVar(Integer, false, rd);
+				}
+				else {
+					rd.d = (ruaFloat)v1->data.i / v2->data.i;
+					return vm->AllocateVar(Float, false, rd);
+				}
 			}
-			else {
-				rd.d = (ruaFloat)v1->data.i / v2->data.i;
+			else if (v2->type == Float) {
+				if (v2->data.d == 0) {
+					EasyLog::Write("Runtime internal operator / (Error): divide zero!");
+					exit(-1);
+				}
+				rd.d = v1->data.i / v2->data.d;
 				return vm->AllocateVar(Float, false, rd);
 			}
+			else {
+				EasyLog::Write("Runtime internal operator / (Error): para 2 is not number!");
+				exit(-1);
+
+			} break;
 		case Float:
+			if (v2->data.d == 0) {
+				EasyLog::Write("Runtime internal operator / (Error): divide zero!");
+				exit(-1);
+			}
 			if (v2->type == Float)
 				rd.d = v1->data.d / v2->data.d;
 			else
@@ -138,8 +173,10 @@ namespace RUA {
 	}
 
 	uint g_rua_int_divide(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd;
 		switch (v1->type)
 		{
 		case Boolean: case Integer:
@@ -153,13 +190,12 @@ namespace RUA {
 	}
 
 	uint g_rua_move_left(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
-		case Boolean:
-			rd.b = v1->data.b << v2->data.b;
-			return vm->AllocateVar(Boolean, false, rd);
 		case Integer:
 			rd.i = v1->data.i << v2->data.i;
 			return vm->AllocateVar(Integer, false, rd);
@@ -171,13 +207,12 @@ namespace RUA {
 	}
 
 	uint g_rua_move_right(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd;
 		switch (v1->type)
 		{
-		case Boolean:
-			rd.b = v1->data.b >> v2->data.b;
-			return vm->AllocateVar(Boolean, false, rd);
 		case Integer:
 			rd.i = v1->data.i >> v2->data.i;
 			return vm->AllocateVar(Integer, false, rd);
@@ -189,8 +224,10 @@ namespace RUA {
 	}
 
 	uint g_rua_less(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
 		case Boolean: case Integer:
@@ -223,9 +260,11 @@ namespace RUA {
 	}
 
 	uint g_rua_equal(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
 		if (v1->type < v2->type) return g_rua_equal(vm, v2, v1);
-		RuaData rd; uint ret;
+		RuaData rd;
 		switch (v1->type)
 		{
 		case Boolean:
@@ -253,8 +292,10 @@ namespace RUA {
 	}
 
 	uint g_rua_greater(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
 		case Boolean: case Integer:
@@ -287,6 +328,8 @@ namespace RUA {
 	}
 
 	uint g_rua_leq(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		uint ret = g_rua_greater(vm, v1, v2);
 		if (!ret) return 0;
 		vm->GetVar(ret)->data.b = !vm->GetVar(ret)->data.b;
@@ -294,6 +337,8 @@ namespace RUA {
 	}
 
 	uint g_rua_geq(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		uint ret = g_rua_less(vm, v1, v2);
 		if (!ret) return 0;
 		vm->GetVar(ret)->data.b = !vm->GetVar(ret)->data.b;
@@ -301,6 +346,8 @@ namespace RUA {
 	}
 
 	uint g_rua_neq(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		uint ret = g_rua_equal(vm, v1, v2);
 		if (!ret) return 0;
 		vm->GetVar(ret)->data.b = !vm->GetVar(ret)->data.b;
@@ -308,8 +355,10 @@ namespace RUA {
 	}
 
 	uint g_rua_mod(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
-		RuaData rd; uint ret;
+		RuaData rd;
 		switch (v1->type)
 		{
 		case Boolean: case Integer:
@@ -323,9 +372,11 @@ namespace RUA {
 	}
 
 	uint g_rua_and(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
 		if (v1->type < v2->type) return g_rua_and(vm, v2, v1);
-		RuaData rd; uint ret;
+		RuaData rd;
 		switch (v1->type)
 		{
 		case Boolean:
@@ -348,9 +399,11 @@ namespace RUA {
 	}
 
 	uint g_rua_or(RuaVarManager* vm, RuaVariable* v1, RuaVariable* v2) {
+		CALC_CHECK_PVAR(v1);
+		CALC_CHECK_PVAR(v2);
 		if (v1->type >= 5) return 0;
 		if (v1->type < v2->type) return g_rua_or(vm, v2, v1);
-		RuaData rd; uint ret;
+		RuaData rd; 
 		switch (v1->type)
 		{
 		case Boolean:
@@ -367,6 +420,28 @@ namespace RUA {
 			return vm->AllocateVar(Boolean, false, rd);
 		case String:
 			EasyLog::Write("Runtime internal operator || (Error)");
+			exit(-1);
+		}
+		return 0;
+	}
+
+	uint g_rua_neg(RuaVarManager* vm, RuaVariable* v1) {
+		CALC_CHECK_PVAR(v1);
+		if (v1->type >= 5) return 0;
+		RuaData rd;
+		switch (v1->type)
+		{
+		case Boolean:
+			rd.b = !v1->data.b;
+			return vm->AllocateVar(Boolean, false, rd);
+		case Integer:
+			rd.i = -v1->data.i;
+			return vm->AllocateVar(Integer, false, rd);
+		case Float:
+			rd.d = -v1->data.d;
+			return vm->AllocateVar(Float, false, rd);
+		case String:
+			EasyLog::Write("Error Internal operator - : Cannot operate - on a string object.");
 			exit(-1);
 		}
 		return 0;
@@ -392,6 +467,7 @@ uint g_valueCalculate(RuaVarManager* vm, uint* paras, RuaCommand& cmd) {
 	case '%': return RUA::g_rua_mod(vm, vm->GetVar(paras[0]), vm->GetVar(paras[1]));
 	case OPE_AND: return RUA::g_rua_and(vm, vm->GetVar(paras[0]), vm->GetVar(paras[1]));
 	case OPE_OR: return RUA::g_rua_or(vm, vm->GetVar(paras[0]), vm->GetVar(paras[1]));
+	case OPE_NEG: return RUA::g_rua_neg(vm, vm->GetVar(paras[0]));
 	}
     return 0;
 }

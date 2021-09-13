@@ -43,11 +43,15 @@ private:
 
     int runCommand(RuaCommand cmd);
 
-    int nxtTempTokId();
-
     void UnrefVar(uLL tok);
 
 public:
+
+    RuaControlFLow*& GetGlobalControlFlow();
+
+    RuaEnv* GetGlobalEnvironment();
+
+    int nxtTempTokId();
 
     uint FindRealVar(uLL tokid, bool translated = true);
 

@@ -109,7 +109,7 @@ void RuaVarManager::RefVar(uint idx) {
 
 std::string RuaVarManager::to_string(uint id, bool full) {
     auto p = GetVar(id);
-    if (p == nullptr) return "[ NULL ]";
+    if (p == nullptr) return "NULL";
     std::string ret = full ? ("{ " + std::to_string(id) + " : ") : "";
     switch (p->type)
     {

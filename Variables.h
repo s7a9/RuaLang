@@ -33,8 +33,8 @@ typedef std::map<uint, uint>                    ruaCLass;
 #define FUNC_MEMBER         2
 
 struct RuaFuncInfo {
-    int func_type;
-    void* data;
+    int func_type = 0;
+    void* data = nullptr;
     std::vector<uint> paras;
 };
 

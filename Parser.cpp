@@ -25,6 +25,11 @@ RuaParser::RuaParser() {
     }
 }
 
+bool& RuaParser::GetLastIsOpe()
+{
+    return last_is_ope;
+}
+
 int RuaParser::NewToken(int type, std::string text, std::string name)
 {
     TokenInfo ti(type, m_nxt_new_idx++, name, text);
@@ -42,7 +47,6 @@ TokenInfo RuaParser::Parse(RuaData& data) {
     std::string token_text;
     data = RuaData{0};
     int tmp;
-    static bool last_is_ope = true;
     while (C != '\0') {
         if (C == '\n') m_charno = idx, m_lineno ++, idx++;
         else if (isblank(C)) idx++;
@@ -63,11 +67,27 @@ TokenInfo RuaParser::Parse(RuaData& data) {
                     idx++, tmp++;
                 }
                 data.d = data.d / pow(10, tmp) * (last_is_ope ? -1 : 1);
+                last_is_ope = false;
+                //printf("DATA: %f   ", data.d);
+                return TokenInfo(TOK_VAR, VAR_FLOAT, "CONST", token_text);
+            }
+            else if (C == 'e' || C == 'E') {
+                data.d = (ruaFloat)data.i, tmp = 0, idx++, token_text += 'e';
+                data.d *= last_is_ope ? -1 : 1;
+                last_is_ope = C == '-';
+                if (last_is_ope) idx++;
+                while (isdigit(C)) {
+                    tmp = tmp * 10 - '0' + C, token_text += C;
+                    idx++;
+                }
+                data.d *= pow(10, tmp * (last_is_ope ? -1 : 1));
+                last_is_ope = false;
                 //printf("DATA: %f   ", data.d);
                 return TokenInfo(TOK_VAR, VAR_FLOAT, "CONST", token_text);
             }
             else {
                 data.i *=  (last_is_ope ? -1 : 1);
+                last_is_ope = false;
                 //printf("DATA: %d   ", data.i);
                 return TokenInfo(TOK_VAR, VAR_INTEAGER, "CONST", token_text);
             }
@@ -157,7 +177,7 @@ TokenInfo RuaParser::Parse(RuaData& data) {
             return m_tokenInfo[iter->second];
         }
     }
-    return TokenInfo(TOK_END, 0, "", "");
+    return m_tokenInfo[TOK_END];
 }
 
 std::string RuaParser::GetPosition() {

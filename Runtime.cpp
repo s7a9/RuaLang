@@ -12,15 +12,17 @@
 
 #define GETCHK(tok) if((m_ti=m_parser.Parse(m_tmp)).info!=tok)\
                 {EasyLog::Write("Preprocess (Error): in position " + \
-                m_parser.GetPosition() + " expectd " + std::to_string(tok) + \
-                " but found " + std::to_string(m_ti.info)); exit(0);}
+                m_parser.GetPosition() + " expectd " + m_parser.GetTokenInfo(tok)->text + \
+                " but found " + m_parser.GetTokenInfo(m_ti.info)->text); exit(0);}
 
 #define CHK(tok) if(m_ti.info!=tok)\
                 {EasyLog::Write("Preprocess (Error): in position " + \
-                m_parser.GetPosition() + " expectd " + std::to_string(tok) + \
-                " but found " + std::to_string(m_ti.info)); exit(0);}
+                m_parser.GetPosition() + " expectd " + m_parser.GetTokenInfo(tok)->text + \
+                " but found " + m_parser.GetTokenInfo(m_ti.info)->text); exit(0);}
 
 #define NXT m_ti = m_parser.Parse(m_tmp);
+
+// #define Write(str) Write('[' + TOPENV.name + ']' + str)
 
 RuaSentence RuaRuntime::parseExpression(int prio) {
     //printf("%s %d %s %d\n", m_parser.GetPosition().c_str(), m_ti.info, m_ti.text.c_str(), prio);
@@ -79,8 +81,9 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
             }
             GETCHK('{')
             finfo->data = new RuaControlFLow(parseControlFlow());
+            m_parser.GetLastIsOpe() = true;
             m_tmp.f = finfo;
-            //printf("FUNC \n { ", finfo->paras.size());
+            //printf("FUNC %d\n { ", finfo->paras.size());
             //static_cast<RuaControlFLow*>(finfo->data)->Print();
             //printf(" } \n");
             stk.push({OPE_PUSH_CONST, m_vm.AllocateVar(Function, true, m_tmp)});
@@ -104,7 +107,9 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
             sttmp = parseExpression(2);
             sent.insert(sent.end(), sttmp.begin(), sttmp.end());
             sent.push_back({ OPE_INDEX, 0 });
-            CHK(']') NXT
+            CHK(']')
+            m_parser.GetLastIsOpe() = false;
+            NXT
         }
         else if (m_ti.info == OPE_CALL) {
             popStack(sent, stk);
@@ -353,7 +358,16 @@ int RuaRuntime::runCommand(RuaCommand i) {
             UnrefVar(rids[0]);
             if (HIDWORD(paras[1]) == 1)
                 m_vm.RefVar(rids[1]);
-            TOPENV.varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
+            auto iter = TOPENV.varmap.find(LODWORD(paras[0]));
+            if (iter == TOPENV.varmap.end()) {
+                iter = m_global_env->varmap.find(LODWORD(paras[0]));
+                if (iter == m_global_env->varmap.end())
+                    TOPENV.varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
+                else m_global_env->varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
+            }
+            else {
+                TOPENV.varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
+            }
             TOPENV.varstk.push(paras[0]);
         }
         else if (i.cmd == OPE_INDEX) {
@@ -363,7 +377,12 @@ int RuaRuntime::runCommand(RuaCommand i) {
                     EasyLog::Write("Runtime (error): index of list must be Integer, but found " + std::to_string(pv1->type));
                     return ERROR;
                 }
-                TOPENV.varstk.push(pvar->data.l->at(pv1->data.i));
+                if (pv1->data.i >= 0) 
+                    TOPENV.varstk.push(pvar->data.l->at(pv1->data.i));
+                else {
+                    int idx = (pv1->data.i % pvar->data.l->size());
+                    TOPENV.varstk.push(pvar->data.l->at(idx));
+                }
             }
             if (HIDWORD(paras[0]) == 0) UnrefVar(rids[0]);
             if (HIDWORD(paras[1]) == 0) UnrefVar(rids[1]);
@@ -387,6 +406,10 @@ int RuaRuntime::runCommand(RuaCommand i) {
         }
         else if (i.cmd == OPE_CALL) {
             RuaVariable* pvar = m_vm.GetVar(LODWORD(rids[0]));
+            if (pvar == nullptr) {
+                EasyLog::Write("Runtime (error): called function not exist.");
+                exit(-1);
+            }
             if (pvar->type == Function) {
                 RuaFuncInfo* rfi = pvar->data.f;
                 uint ret;
@@ -402,7 +425,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
                         return ERROR;
                     }
                     RuaEnv nxtEnv;
-                    if (HIDWORD(paras[0]) == 1)
+                    if (HIDWORD(paras[0]) == 1 && LODWORD(paras[0]) < BEGIN_OF_TEMP_VAR)
                         nxtEnv.name = m_parser.GetTokenInfo(paras[0])->text;
                     else nxtEnv.name = "__anony_func__:" + std::to_string(rids[0]);
                     for (int it = 0; it < prs->size(); it++) {
@@ -412,11 +435,13 @@ int RuaRuntime::runCommand(RuaCommand i) {
                             nxtEnv.varmap[rfi->paras[it]] = prs->at(it);
                     }
                     m_env_stk.push(nxtEnv);
+                    EasyLog::environ_name = &TOPENV.name;
                     R = runControlFlow((RuaControlFLow*)rfi->data);
                     if (R != RETURN && R != 0) return R;
                     uLL result = TOPENV.varstk.empty() ? 0 : TOPENV.varstk.top();
                     for (auto iter : TOPENV.varmap) UnrefVar(iter.second);
                     m_env_stk.pop();
+                    EasyLog::environ_name = &TOPENV.name;
                     if (result) TOPENV.varstk.push(result);
                     m_vm.UnrefVar(rids[1]);
                     if (HIDWORD(paras[0]) == 0) UnrefVar(rids[0]);
@@ -464,6 +489,16 @@ void RuaRuntime::UnrefVar(uLL tok) {
     m_vm.UnrefVar(id);
 }
 
+RuaControlFLow*& RuaRuntime::GetGlobalControlFlow()
+{
+    return m_global_cf;
+}
+
+RuaEnv* RuaRuntime::GetGlobalEnvironment()
+{
+    return m_global_env;
+}
+
 uint RuaRuntime::FindRealVar(uLL tokid, bool tl) {
     if (HIDWORD(tokid) == 0 && !tl) return LODWORD(tokid);
     auto iter = TOPENV.varmap.find(LODWORD(tokid));
@@ -484,6 +519,7 @@ RuaRuntime::RuaRuntime() {
     m_env_stk.push(RuaEnv());
     m_global_env = &m_env_stk.top();
     m_global_env->name = "__global__";
+    EasyLog::environ_name = &TOPENV.name;
 
     m_nxt_temp_tok_id = BEGIN_OF_TEMP_VAR;
 }
@@ -508,11 +544,11 @@ int RuaRuntime::Preprocess(std::string text) {
 void RuaRuntime::Run() {
     runControlFlow(m_global_cf);
     TokenInfo* tok_main = m_parser.GetTokenInfo("main");
-    auto iter = m_global_env->varmap.find(tok_main->info);
-    if (iter == m_global_env->varmap.end()) {
+    if (tok_main == nullptr) {
         EasyLog::Write("Runtime (error): No main found.");
         return;
     }
+    auto iter = m_global_env->varmap.find(tok_main->info);
     if (m_vm.GetVar(iter->second)->type != Function) {
         EasyLog::Write("Runtime (error): Main is not a function.");
         return;
@@ -524,7 +560,7 @@ void RuaRuntime::Run() {
     printf("\n-------------------------\nProgram exited with ");
     if (stk.empty()) printf("no exit code.");
     else {
-        printf("return variable : %s", m_vm.to_string(stk.top()).c_str());
+        printf("return variable : %s", m_vm.to_string(FindRealVar(stk.top(), false)).c_str());
         UnrefVar(stk.top());
     }
 }
@@ -537,4 +573,5 @@ void RuaRuntime::Execute(std::string program)
         m_global_cf->cfs.push_back(parseControlFlow());
     } while (m_ti.type != TOK_END);
     runControlFlow(m_global_cf);
+    delete m_global_cf;
 }
