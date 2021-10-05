@@ -22,11 +22,11 @@ enum RuaVarType {
 };
 
 typedef bool                                    ruaBool;
-typedef int                                     ruaInt;
+typedef long long                               ruaInt;
 typedef double                                  ruaFloat;
 typedef std::string                             ruaString;
 typedef std::vector<uLL>                        ruaList;
-typedef std::map<uint, uint>                    ruaCLass;
+typedef std::map<uint, uLL>                     ruaCLass;
 
 #define FUNC_GLOBAL         0
 #define FUNC_INBUILT        1

@@ -20,7 +20,7 @@ void runFile(char* path) {
     stringstream buffer;
     buffer << ifs.rdbuf();
     std::string contents(buffer.str());
-    cout << "Loading from text: " << path << endl;
+    cout << "Loading from file: " << path << endl;
     //cout << "------ Program Text ------" << endl << contents << endl << endl;
     ifs.close();
 
@@ -38,13 +38,6 @@ void runFile(char* path) {
 }
 
 int main(int argc, char* argv[]) {
-    string exe_path(argv[0]);
-    while (exe_path[exe_path.size() - 1] != '\\')
-        exe_path.pop_back();
-    exe_path += "log.txt";
-    EasyLog::log_path = (char*)exe_path.c_str();
-    //RuaData rd; rd.f = &rfi1;
-    //rrt.SetConstant("print", RuaVariable(Function, rd, 0));
     for (int i = 0; i < RuaInternalFuncCnt; i++) {
         RuaData rd;
         rd.f = new RuaFuncInfo;

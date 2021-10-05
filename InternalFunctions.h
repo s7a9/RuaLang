@@ -64,7 +64,7 @@ const RuaFuncInfo RuaInternalFuncInfoList[] = {
 const std::string RuaInternalFunctionNames[] = {
      "print", "input" , "int", "float", "str", "len", "read_file", "exist", 
      "write_file", "exec", "is_null", "append", "typeof", "exit", "str_to_list",
-     "list_to_str", "breakpoint", "__id__",
+     "list_to_str", "breakpoint", "__id__", 
 };
 
 const int RuaInternalFuncCnt = sizeof(RuaInternalFuncInfoList) / sizeof(RuaFuncInfo);

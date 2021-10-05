@@ -14,6 +14,7 @@
 #define RETURN      4103
 #define BREAK       4104
 #define CONTINUE    4015
+#define FOREACH     4016
 #define ERROR       (-0x7f7f7f)
 
 struct RuaCommand {
@@ -32,7 +33,7 @@ struct RuaControlFLow {
 
     RuaControlFLow(int t): type(t) {}
 
-    void Print(RuaSentence st) {
+    /*void Print(RuaSentence st) {
         for (auto cmd : st) printf("%d, %d; ", cmd.cmd, cmd.para);
     }
 
@@ -85,7 +86,7 @@ struct RuaControlFLow {
             printf(" }\n");
             break;
         }
-    }
+    }*/
 };
 
 #endif //H_CONTROLFLOW

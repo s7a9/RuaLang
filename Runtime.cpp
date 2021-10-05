@@ -63,7 +63,6 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
                 }
                 GETCHK('=')
                 sttmp = parseExpression(2);
-
             }
         }
         else if (m_ti.info == VAR_FUNC) {
@@ -180,6 +179,14 @@ RuaControlFLow RuaRuntime::parseControlFlow() {
     if (m_ti.type == TOK_CF) {
         switch (m_ti.info)
         {
+        case FOREACH:
+            cf.type = FOREACH;
+            GETCHK('(') NXT
+            cf.cmds.push_back(parseExpression(2)); NXT
+            cf.cmds.push_back(parseExpression(1));
+            CHK(')') NXT
+            cf.cfs.push_back(parseControlFlow());
+            return cf;
         case FOR:
             cf.type = FOR;
             GETCHK('(') NXT
@@ -269,6 +276,9 @@ int RuaRuntime::runControlFlow(RuaControlFLow* cf) {
             CHKRET(runSentence(&cf->cmds[2], false))
         }
         return 0;
+    case FOREACH:
+
+        return 0;
     case IF:
         for (int i = 0; i < cf->cmds.size(); i++) {
             CHKRET(runSentence(&cf->cmds[i], true))
@@ -351,24 +361,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
             TOPENV.varstk.pop();
         }
         if (i.cmd == '=') {
-            if ((paras[0] >> 32) != 1) {
-                EasyLog::Write("Runtime (error): left = must be variable.");
-                return ERROR;
-            }
-            UnrefVar(rids[0]);
-            if (HIDWORD(paras[1]) == 1)
-                m_vm.RefVar(rids[1]);
-            auto iter = TOPENV.varmap.find(LODWORD(paras[0]));
-            if (iter == TOPENV.varmap.end()) {
-                iter = m_global_env->varmap.find(LODWORD(paras[0]));
-                if (iter == m_global_env->varmap.end())
-                    TOPENV.varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
-                else m_global_env->varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
-            }
-            else {
-                TOPENV.varmap[LODWORD(paras[0])] = LODWORD(rids[1]);
-            }
-            TOPENV.varstk.push(paras[0]);
+            CHKRET(giveValue(paras[1], paras[0]))
         }
         else if (i.cmd == OPE_INDEX) {
             RuaVariable* pvar = m_vm.GetVar((rids[0])), *pv1 = m_vm.GetVar((rids[1]));
@@ -487,6 +480,30 @@ void RuaRuntime::UnrefVar(uLL tok) {
         }
     }
     m_vm.UnrefVar(id);
+}
+
+int RuaRuntime::giveValue(uLL src, uLL dst)
+{
+    uint rsrc = FindRealVar(src, false),
+         rdst = FindRealVar(dst, false);
+    if ((dst >> 32) != 1) {
+        EasyLog::Write("Runtime (error): left = must be variable.");
+        return ERROR;
+    }
+    UnrefVar(rdst);
+    if (HIDWORD(src) == 1)
+        m_vm.RefVar(rsrc);
+    auto iter = TOPENV.varmap.find(LODWORD(dst));
+    if (iter == TOPENV.varmap.end()) {
+        iter = m_global_env->varmap.find(LODWORD(dst));
+        if (iter == m_global_env->varmap.end())
+            TOPENV.varmap[LODWORD(dst)] = LODWORD(rsrc);
+        else m_global_env->varmap[LODWORD(dst)] = LODWORD(rsrc);
+    }
+    else {
+        TOPENV.varmap[LODWORD(dst)] = LODWORD(rsrc);
+    }
+    TOPENV.varstk.push(dst);
 }
 
 RuaControlFLow*& RuaRuntime::GetGlobalControlFlow()

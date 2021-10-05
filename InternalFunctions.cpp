@@ -14,7 +14,7 @@ void _rua_print_recursion(uLL rid, RuaVarManager* vm, RuaRuntime* rt) {
     switch (pvar->type)
     {
     case Integer:
-        printf("%d", pvar->data.i); break;
+        printf("%lld", pvar->data.i); break;
     case Float:
         printf("%lf", pvar->data.d); break;
     case String:
@@ -55,7 +55,7 @@ uint _rua_input(RuaRuntime* rt, uint list_id) {
         switch (pvar->type)
         {
         case Integer:
-            printf("%d", pvar->data.i); break;
+            printf("%lld", pvar->data.i); break;
         case Float:
             printf("%lf", pvar->data.d); break;
         case String:
@@ -390,7 +390,7 @@ uint _rua_append(RuaRuntime* rt, uint list_id)
         int tmp;
         if (rid == 0) continue;
         tmp = rt->nxtTempTokId();
-        rt->GetGlobalEnvironment()->varmap[tmp] = rid;
+        rt->GetGlobalEnvironment()->varmap[tmp] = LODWORD(rid);
         vm->RefVar(rid);
         var->data.l->push_back(COMBINE(1, tmp));
     }

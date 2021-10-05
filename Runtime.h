@@ -19,6 +19,8 @@ private:
 
     RuaEnv *m_global_env;
 
+    std::stack<ruaCLass*> m_this_stk;
+
     std::stack<RuaEnv> m_env_stk;
 
     RuaParser m_parser;
@@ -44,6 +46,8 @@ private:
     int runCommand(RuaCommand cmd);
 
     void UnrefVar(uLL tok);
+
+    int giveValue(uLL src, uLL dst);
 
 public:
 

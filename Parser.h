@@ -27,6 +27,7 @@ private:
         {TOK_CF, IF, "IF", "if"},
         {TOK_CF, ELIF, "ELIF", "elif"},
         {TOK_CF, ELSE, "ELSE", "else"},
+        {TOK_CF, FOREACH, "FOREACH", "foreach"},
         {TOK_OPE, RETURN, "RETURN", "return"},
         {TOK_OPE, BREAK, "BREAK", "break"},
         {TOK_OPE, CONTINUE, "CONTINUE", "continue"},
