@@ -137,7 +137,7 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
                     id = m_vm.AllocateVar(Boolean, true, m_tmp);
                     stk.push({ OPE_PUSH_CONST, id });
                     break;
-                case VAR_INTEAGER:
+                case VAR_INTEGER:
                     id = m_vm.AllocateVar(Integer, true, m_tmp);
                     stk.push({OPE_PUSH_CONST, id});
                     break;
@@ -363,6 +363,15 @@ int RuaRuntime::runCommand(RuaCommand i) {
         if (i.cmd == '=') {
             CHKRET(giveValue(paras[1], paras[0]))
         }
+        else if (i.cmd == '&') {
+            RuaVariable* pvar = m_vm.GetVar((rids[0]));
+            if (pvar->type != Integer) {
+                EasyLog::Write("Runtime (error): The index to refer to is not integer!");
+                return ERROR;
+            }
+            TOPENV.varstk.push(LODWORD(pvar->data.i));
+            UnrefVar(paras[0]);
+        }
         else if (i.cmd == OPE_INDEX) {
             RuaVariable* pvar = m_vm.GetVar((rids[0])), *pv1 = m_vm.GetVar((rids[1]));
             if (pvar->type == List) {
@@ -504,6 +513,7 @@ int RuaRuntime::giveValue(uLL src, uLL dst)
         TOPENV.varmap[LODWORD(dst)] = LODWORD(rsrc);
     }
     TOPENV.varstk.push(dst);
+    return 0;
 }
 
 RuaControlFLow*& RuaRuntime::GetGlobalControlFlow()

@@ -4,6 +4,12 @@ RuaVariable::RuaVariable(RuaVarType t, RuaData d, int r) {
     type = t, data = d, refCnt = r;
 }
 
+RuaVarManager::RuaVarManager()
+{
+    m_maxIdx = 1;
+    m_vars.push_back(nullptr);
+}
+
 uint RuaVarManager::CopyVar(uint id) {
     RuaVariable* rv = GetVar(id);
     if (rv == nullptr) return 0;
@@ -58,19 +64,30 @@ uint RuaVarManager::AllocateVar(RuaVarType type, bool isConstant) {
 
 uint RuaVarManager::AllocateVar(RuaVarType type, bool isConstant, RuaData data) {
     RuaVariable* pvar = new RuaVariable(type, data, isConstant ? -0x5f7f7f7f : 1);
-    while (m_vars.find(m_maxIdx) != m_vars.end() || m_maxIdx == 0) m_maxIdx ++;
-    m_vars[m_maxIdx ++] = pvar;
-    return m_maxIdx - 1;
+    /*while (m_vars.find(m_maxIdx) != m_vars.end() || m_maxIdx == 0) m_maxIdx ++;
+    m_vars[m_maxIdx++] = pvar;
+    return m_maxIdx - 1;*/
+    uint id;
+    if (m_used_vars.empty()) {
+        if (m_maxIdx == 0) {
+            EasyLog::Write("Error (VarManager): allocated too many variables!");
+            exit(-1);
+        }
+        id = m_maxIdx;
+        m_maxIdx++;
+        m_vars.push_back(pvar);
+    }
+    else {
+        id = m_used_vars.front();
+        m_used_vars.pop_front();
+        m_vars[id] = pvar;
+    }
+    return id;
 }
 
 RuaVariable* RuaVarManager::GetVar(uint idx) {
-    if (idx == 0) return nullptr;
-    auto iter = m_vars.find(idx);
-    if (iter == m_vars.end()) {
-        EasyLog::Write("Error (VarManager): index not exist!");
-        return nullptr;
-    }
-    return iter->second;
+    if (idx >= m_vars.size()) return nullptr;
+    return m_vars[idx];
 }
 
 void RuaVarManager::UnrefVar(uint idx) {
@@ -98,7 +115,8 @@ void RuaVarManager::DeleteVar(uint idx) {
         break;
     }   
     delete pvar;
-    m_vars.erase(idx);
+    m_vars[idx] = nullptr;
+    m_used_vars.push_back(idx);
 }
 
 void RuaVarManager::RefVar(uint idx) {

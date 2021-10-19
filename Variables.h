@@ -10,7 +10,7 @@
 
 #define VAR_FUNC            2048
 #define VAR_CLASS           2049
-#define VAR_INTEAGER        2050
+#define VAR_INTEGER        2050
 #define VAR_FLOAT           2051
 #define VAR_STRING          2052
 #define VAR_TRUE            2053
@@ -58,11 +58,15 @@ struct RuaVariable {
 
 class RuaVarManager {
 private:
-    std::map<uint, RuaVariable*> m_vars;
+    std::vector<RuaVariable*> m_vars;
 
     uint m_maxIdx = 1;
 
+    std::deque<uint> m_used_vars;
+
 public:
+    RuaVarManager();
+
     uint CopyVar(uint id);
 
     uint AllocateVar(RuaVarType type, bool isConstant);

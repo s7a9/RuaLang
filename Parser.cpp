@@ -89,7 +89,7 @@ TokenInfo RuaParser::Parse(RuaData& data) {
                 data.i *=  (last_is_ope ? -1 : 1);
                 last_is_ope = false;
                 //printf("DATA: %d   ", data.i);
-                return TokenInfo(TOK_VAR, VAR_INTEAGER, "CONST", token_text);
+                return TokenInfo(TOK_VAR, VAR_INTEGER, "CONST", token_text);
             }
         } 
         else if (isalpha(C) || C == '_') {
