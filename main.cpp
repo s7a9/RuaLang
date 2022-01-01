@@ -38,6 +38,7 @@ void runFile(char* path) {
 }
 
 int main(int argc, char* argv[]) {
+    srand(time(NULL));
     for (int i = 0; i < RuaInternalFuncCnt; i++) {
         RuaData rd;
         rd.f = new RuaFuncInfo;

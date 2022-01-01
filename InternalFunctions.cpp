@@ -217,8 +217,30 @@ uint _rua_list_to_str(RuaRuntime* rt, uint list_id)
     return vm->AllocateVar(String, false, rd);
 }
 
+#include <iostream>
+
 uint _rua_breakpoint(RuaRuntime* rt, uint list_id)
 {
+    std::string program, input;
+    while (input != "dbexit")
+    {
+        printf("\n(debug) >>> ");
+        std::getline(std::cin, input);
+        if (input.empty()) continue;
+        program += input;
+        if (input[input.size() - 1] == '#') {
+            program = program.substr(0, program.size() - 1);
+            do
+            {
+                printf("(debug) +>> ");
+                std::getline(std::cin, input);
+                program += input;
+            } while (input[input.size() - 1] != '#');
+            //program = program.substr(0, program.size() - 1);
+        }
+        rt->Execute(program);
+        program = "";
+    }
     return 0;
 }
 
@@ -246,6 +268,9 @@ uint _rua_len(RuaRuntime* rt, uint list_id) {
     }
     if (var->type == List) {
         rd.i = var->data.l->size();
+    }
+    else if (var->type == String) {
+        rd.i = var->data.s->size();
     }
     else {
         EasyLog::Write("External function len (error): parameter unsupported.");
@@ -309,26 +334,26 @@ uint _rua_write_file(RuaRuntime* rt, uint list_id) {
     auto vm = rt->GetVarManager();
     ruaList* rl = vm->GetVar(list_id)->data.l;
     if (rl->size() != 2) {
-        EasyLog::Write("External function write_file (error): # of para is not 2.");
-        exit(-1);
+        EasyLog::Write("External function write_file (exited): # of para is not 2.");
+        return 0;
     }
     auto var = vm->GetVar(rt->FindRealVar(rl->at(0), false)),
         var_content = vm->GetVar(rt->FindRealVar(rl->at(1), false));
     if (var == nullptr) {
-        EasyLog::Write("External function read_file (error): path is null.");
-        exit(-1);
+        EasyLog::Write("External function read_file (exited): path is null.");
+        return 0;
     }
     if (var_content == nullptr) {
-        EasyLog::Write("External function read_file (error): content is null.");
-        exit(-1);
+        EasyLog::Write("External function read_file (exited): content is null.");
+        return 0;
     }
     if (var->type != String) {
-        EasyLog::Write("External function write_file (error): path is not string.");
-        exit(-1);
+        EasyLog::Write("External function write_file (exited): path is not string.");
+        return 0;
     }
     if (var_content->type != String) {
-        EasyLog::Write("External function write_file (error): content is not string.");
-        exit(-1);
+        EasyLog::Write("External function write_file (exited): content is not string.");
+        return 0;
     }
     ruaString* ps = var->data.s;
     std::ofstream hfile(ps->c_str());
@@ -341,17 +366,17 @@ uint _rua_execute(RuaRuntime* rt, uint list_id) {
     auto vm = rt->GetVarManager();
     ruaList* rl = vm->GetVar(list_id)->data.l;
     if (rl->size() != 1) {
-        EasyLog::Write("External function execute (error): # of para is not 1.");
-        exit(-1);
+        EasyLog::Write("External function execute (exited): # of para is not 1.");
+        return 0;
     }
     auto var = vm->GetVar(rt->FindRealVar(rl->at(0), false));
     if (var == nullptr) {
-        EasyLog::Write("External function read_file (error): path is null.");
-        exit(-1);
+        EasyLog::Write("External function read_file (exited): command is null.");
+        return 0;
     }
     if (var->type != String) {
-        EasyLog::Write("External function execute (error): parament is not string.");
-        exit(-1);
+        EasyLog::Write("External function execute (exited): parament is not string.");
+        return 0;
     }
     RuaControlFLow* lastCF = rt->GetGlobalControlFlow();
     rt->Execute(*var->data.s);
@@ -378,21 +403,24 @@ uint _rua_append(RuaRuntime* rt, uint list_id)
     ruaList* rl = vm->GetVar(list_id)->data.l;
     auto var = vm->GetVar(rt->FindRealVar(rl->at(0), false));
     if (var == nullptr) {
-        EasyLog::Write("External function append (error): parament is null.");
-        exit(-1);
+        EasyLog::Write("External function append (exited): parament is null.");
+        return 0;
     }
     if (var->type != List) {
-        EasyLog::Write("External function append (error): parameter 1 is not list.");
-        exit(-1);
+        EasyLog::Write("External function append (exited): parameter 1 is not list.");
+        return 0;
     }
     for (int i = 1; i < rl->size(); i++) {
         uLL rid = rt->FindRealVar(rl->at(i), false);
         int tmp;
-        if (rid == 0) continue;
-        tmp = rt->nxtTempTokId();
-        rt->GetGlobalEnvironment()->varmap[tmp] = LODWORD(rid);
-        vm->RefVar(rid);
-        var->data.l->push_back(COMBINE(1, tmp));
+        if (rid == 0) 
+            var->data.l->push_back(0);
+        else{
+            tmp = rt->nxtTempTokId();
+            rt->GetGlobalEnvironment()->varmap[tmp] = LODWORD(rid);
+            vm->RefVar(rid);
+            var->data.l->push_back(COMBINE(1, tmp));
+        }
     }
     return 0;
 }
@@ -427,4 +455,65 @@ uint _rua_exit(RuaRuntime* rt, uint list_id)
         _rua_print_recursion(id, vm, rt);
     }
     exit(0);
+}
+
+uint _rua_system(RuaRuntime* rt, uint list_id) {
+    auto vm = rt->GetVarManager();
+    ruaList* rl = vm->GetVar(list_id)->data.l;
+    if (rl->size() != 1) {
+        EasyLog::Write("External function system (exited): # of para is not 1.");
+        return 0;
+    }
+    auto var = vm->GetVar(rt->FindRealVar(rl->at(0), false));
+    if (var->type != String) {
+        EasyLog::Write("External function system (error): command is not string.");
+        exit(-1);
+    }
+    system(var->data.s->c_str());
+    return 0;
+}
+
+uint _rua_table(RuaRuntime* rt, uint list_id)
+{
+    auto vm = rt->GetVarManager();
+    return vm->AllocateVar(Class, false);
+}
+
+uint _rua_randn(RuaRuntime* rt, uint list_id)
+{
+    auto vm = rt->GetVarManager();
+    RuaData rd;
+    rd.i = (ruaInt)rand() << 32 + rand();
+    return vm->AllocateVar(Integer, false, rd);
+}
+
+uint _rua_remove(RuaRuntime* rt, uint list_id)
+{
+    auto vm = rt->GetVarManager();
+    ruaList* rl = vm->GetVar(list_id)->data.l;
+    auto var = vm->GetVar(rt->FindRealVar(rl->at(0), false));
+    if (var == nullptr) {
+        EasyLog::Write("External function remove (exited): parament is null.");
+        return 0;
+    }
+    if (var->type != List) {
+        EasyLog::Write("External function remove (exited): parameter 1 is not list.");
+        return 0;
+    }
+    int n_removed = 0;
+    for (int i = 1; i < rl->size(); i++) {
+        auto pvar = vm->GetVar(rt->FindRealVar(rl->at(i), false));
+        if (pvar->type != Integer) {
+            EasyLog::Write("External function remove (exited): index is not integer.");
+            continue;
+        }
+        int to_rm = (int)pvar->data.i - n_removed;
+        if (to_rm < 0 || to_rm >= var->data.l->size()) {
+            EasyLog::Write("External function remove (exited): index out of range.");
+            continue;
+        }
+        var->data.l->erase(var->data.l->begin() + to_rm);
+        n_removed++;
+    }
+    return 0;
 }

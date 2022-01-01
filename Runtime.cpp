@@ -394,17 +394,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
                 EasyLog::Write("Runtime (error): del must be variable.");
                 return ERROR;
             } 
-            if (rids[0]) {
-                m_vm.DeleteVar(rids[0]);
-                auto iter = TOPENV.varmap.find(LODWORD(paras[0]));
-                if (iter != TOPENV.varmap.end()) 
-                    TOPENV.varmap.erase(iter);
-                else {
-                    iter = m_global_env->varmap.find(LODWORD(paras[0]));
-                    m_global_env->varmap.erase(iter);
-                }
-            }
-            else EasyLog::Write("Runtime (warning): del a variable not exist.");
+            UnrefVar(paras[0]);
         }
         else if (i.cmd == OPE_CALL) {
             RuaVariable* pvar = m_vm.GetVar(LODWORD(rids[0]));
@@ -429,7 +419,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
                     RuaEnv nxtEnv;
                     if (HIDWORD(paras[0]) == 1 && LODWORD(paras[0]) < BEGIN_OF_TEMP_VAR)
                         nxtEnv.name = m_parser.GetTokenInfo(paras[0])->text;
-                    else nxtEnv.name = "__anony_func__:" + std::to_string(rids[0]);
+                    else nxtEnv.name = "anonymous_func:" + std::to_string(rids[0]);
                     for (int it = 0; it < prs->size(); it++) {
                         if (HIDWORD(prs->at(it)) == 1)
                             m_vm.RefVar(nxtEnv.varmap[rfi->paras[it]] = FindRealVar(prs->at(it), false));
@@ -445,9 +435,21 @@ int RuaRuntime::runCommand(RuaCommand i) {
                     m_env_stk.pop();
                     EasyLog::environ_name = &TOPENV.name;
                     if (result) TOPENV.varstk.push(result);
-                    m_vm.UnrefVar(rids[1]);
+                    UnrefVar(rids[1]);
                     if (HIDWORD(paras[0]) == 0) UnrefVar(rids[0]);
                 }
+            }
+        }
+        else if (i.cmd == '.') {
+            RuaVariable* pvar = m_vm.GetVar((rids[0]));
+            auto iter = pvar->data.c->find(LODWORD(paras[1]));
+            if (iter == pvar->data.c->end()) {
+                uLL tt = COMBINE(1, nxtTempTokId());
+                pvar->data.c->insert(std::make_pair(LODWORD(paras[1]), tt));
+                TOPENV.varstk.push(tt);
+            }
+            else {
+                TOPENV.varstk.push(iter->second);
             }
         }
         else {
@@ -486,6 +488,12 @@ void RuaRuntime::UnrefVar(uLL tok) {
         for (auto i : *pvar->data.l) {
             UnrefVar(i);
             m_global_env->varmap.erase(LODWORD(i));
+        }
+    }
+    else if (pvar->type == Class && pvar->refCnt == 1) {
+        for (auto i : *pvar->data.c) {
+            UnrefVar(i.second);
+            m_global_env->varmap.erase(i.second);
         }
     }
     m_vm.UnrefVar(id);
@@ -592,8 +600,8 @@ void RuaRuntime::Run() {
     }
 }
 
-void RuaRuntime::Execute(std::string program)
-{
+void RuaRuntime::Execute(std::string program) {
+    auto pre_cf = m_global_cf;
     m_parser.PutText(program);
     m_global_cf = new RuaControlFLow(SEQUENTIAL); NXT
     do {
@@ -601,4 +609,5 @@ void RuaRuntime::Execute(std::string program)
     } while (m_ti.type != TOK_END);
     runControlFlow(m_global_cf);
     delete m_global_cf;
+    m_global_cf = pre_cf;
 }

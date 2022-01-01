@@ -127,6 +127,10 @@ TokenInfo RuaParser::Parse(RuaData& data) {
                 last_is_ope = true; idx++;
                 return m_tokenInfo[OPE_CALL];
             }
+            if (C == ')' || C == ']') {
+                last_is_ope = false;
+                return m_tokenInfo[m_program_text[idx++]];
+            }
             if (C == '\"') {
                 idx++;
                 while (C != '\"')
