@@ -13,7 +13,7 @@ struct RuaEnv {
 
 class RuaRuntime {
 private:
-    int m_nxt_temp_tok_id;
+    uint m_nxt_temp_tok_id;
 
     RuaVarManager m_vm;
 
@@ -31,7 +31,9 @@ private:
 
     RuaControlFLow* m_global_cf;
 
-    std::map<int, RuaOpeInfo> m_opeMap;
+    std::map<uint, RuaOpeInfo> m_opeMap;
+
+    std::deque<uint> m_tmpTokCycQueue;
 
     RuaSentence parseExpression(int prio);
 
@@ -55,7 +57,7 @@ public:
 
     RuaEnv* GetGlobalEnvironment();
 
-    int nxtTempTokId();
+    uint nxtTempTokId();
 
     uint FindRealVar(uLL tokid, bool translated = true);
 

@@ -2,15 +2,11 @@
 #include "InternalFunctions.h"
 using namespace std;
 
-RuaVarManager vm;
-
 #include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <conio.h>
 #include <cmath>
-#include <ctime>
 
 RuaRuntime rrt;
 
@@ -20,21 +16,9 @@ void runFile(char* path) {
     stringstream buffer;
     buffer << ifs.rdbuf();
     std::string contents(buffer.str());
-    cout << "Loading from file: " << path << endl;
-    //cout << "------ Program Text ------" << endl << contents << endl << endl;
     ifs.close();
-
-    clock_t strt_time = clock(), end_time;
-    //puts("\n----- Preprocess -------");
     rrt.Preprocess(contents);
-    end_time = clock();
-    cout << "Preprocess finished in " << ((double)end_time - strt_time) / CLOCKS_PER_SEC << " sec." << endl << endl;
-    //puts("\n\n------ Run ------");
     rrt.Run();
-    end_time = clock();
-    cout << "\nFinished in " << ((double)end_time - strt_time) / CLOCKS_PER_SEC;
-    puts(" sec. Press any key to exit.");
-    _getch();
 }
 
 int main(int argc, char* argv[]) {
@@ -50,7 +34,7 @@ int main(int argc, char* argv[]) {
     }
     else {
         string input, program;
-        printf("RuaLang VER 1.0\n");
+        printf("RuaLang alpha 1.2\n");
         while (true)
         {
             printf("\n>>> ");

@@ -32,6 +32,7 @@ void _rua_print_recursion(uLL rid, RuaVarManager* vm, RuaRuntime* rt) {
     default:
         printf(vm->to_string(rid).c_str()); break;
     }
+    putchar(' ');
 }
 
 uint _rua_print(RuaRuntime* rt, uint list_id) {
@@ -39,6 +40,7 @@ uint _rua_print(RuaRuntime* rt, uint list_id) {
     ruaList* rl = vm->GetVar(list_id)->data.l;
     for (auto iter = rl->begin(); iter != rl->end(); ++iter)
         _rua_print_recursion(rt->FindRealVar(*iter, false), vm, rt);
+    putchar('\n');
     return 0;
 }
 
@@ -222,6 +224,7 @@ uint _rua_list_to_str(RuaRuntime* rt, uint list_id)
 uint _rua_breakpoint(RuaRuntime* rt, uint list_id)
 {
     std::string program, input;
+    printf("\nBREAKPOINT HIT (use \"dbexit\" to exit)");
     while (input != "dbexit")
     {
         printf("\n(debug) >>> ");
@@ -515,5 +518,24 @@ uint _rua_remove(RuaRuntime* rt, uint list_id)
         var->data.l->erase(var->data.l->begin() + to_rm);
         n_removed++;
     }
+    return 0;
+}
+
+#include <windows.h>
+
+uint _rua_sleep(RuaRuntime* rt, uint list_id)
+{
+    auto vm = rt->GetVarManager();
+    ruaList* rl = vm->GetVar(list_id)->data.l;
+    if (rl->size() == 0) {
+        EasyLog::Write("External function sleep (exited): no parameter.");
+        return 0;
+    }
+    auto pvar = vm->GetVar(rt->FindRealVar(rl->at(0)));
+    if (pvar->type != Integer) {
+        EasyLog::Write("External function sleep (exited): parameter is not integer.");
+        return 0;
+    }
+    Sleep(pvar->data.i);
     return 0;
 }

@@ -133,7 +133,7 @@ RuaSentence RuaRuntime::parseExpression(int prio) {
                 switch (m_ti.info)
                 {
                 case VAR_TRUE: case VAR_FALSE:
-                    m_tmp.b = "true" == m_ti.text;
+                    m_tmp.b = m_ti.info == VAR_TRUE;
                     id = m_vm.AllocateVar(Boolean, true, m_tmp);
                     stk.push({ OPE_PUSH_CONST, id });
                     break;
@@ -304,7 +304,7 @@ int RuaRuntime::runSentence(RuaSentence* sent, bool keep_top) {
         else if (i->cmd == RETURN) {
             if (!TOPENV.varstk.empty()) {
                 uLL id = TOPENV.varstk.top();
-                if (HIDWORD(id) == 1)
+                if (HIDWORD(id))
                     m_vm.RefVar(LODWORD(id = FindRealVar(id, false)));
                 TOPENV.varstk.top() = LODWORD(id);
             }
@@ -319,12 +319,12 @@ int RuaRuntime::runSentence(RuaSentence* sent, bool keep_top) {
                 RuaSentence subrs(i, sent->end());
                 i += runSentence(&subrs, true);
                 tid = TOPENV.varstk.top();
-                if (HIDWORD(tid) == 1) {
+                if (HIDWORD(tid)) {
                     tid = FindRealVar(tid, false);
                     m_vm.RefVar(tid);
                 }
                 m_global_env->varmap.insert(std::make_pair(tt = nxtTempTokId(), tid));
-                lst->push_back(COMBINE(1, tt));
+                lst->push_back(COMBINE(3, tt));
                 TOPENV.varstk.pop();
                 if (i->cmd == ',') i++;
             }
@@ -356,7 +356,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
             }
             paras[R] = TOPENV.varstk.top();
             rids[R] = LODWORD(paras[R]);
-            if (HIDWORD(paras[R]) == 1) 
+            if (HIDWORD(paras[R])) 
                 rids[R] = FindRealVar(rids[R]);
             TOPENV.varstk.pop();
         }
@@ -369,7 +369,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
                 EasyLog::Write("Runtime (error): The index to refer to is not integer!");
                 return ERROR;
             }
-            TOPENV.varstk.push(LODWORD(pvar->data.i));
+            TOPENV.varstk.push(COMBINE(2, LODWORD(pvar->data.i)));
             UnrefVar(paras[0]);
         }
         else if (i.cmd == OPE_INDEX) {
@@ -390,7 +390,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
             if (HIDWORD(paras[1]) == 0) UnrefVar(rids[1]);
         }
         else if (i.cmd == OPE_DEL) {
-            if (HIDWORD(paras[0]) != 1) {
+            if (HIDWORD(paras[0]) == 0) {
                 EasyLog::Write("Runtime (error): del must be variable.");
                 return ERROR;
             } 
@@ -400,7 +400,7 @@ int RuaRuntime::runCommand(RuaCommand i) {
             RuaVariable* pvar = m_vm.GetVar(LODWORD(rids[0]));
             if (pvar == nullptr) {
                 EasyLog::Write("Runtime (error): called function not exist.");
-                exit(-1);
+                return ERROR;
             }
             if (pvar->type == Function) {
                 RuaFuncInfo* rfi = pvar->data.f;
@@ -417,11 +417,11 @@ int RuaRuntime::runCommand(RuaCommand i) {
                         return ERROR;
                     }
                     RuaEnv nxtEnv;
-                    if (HIDWORD(paras[0]) == 1 && LODWORD(paras[0]) < BEGIN_OF_TEMP_VAR)
+                    if (HIDWORD(paras[0]) && LODWORD(paras[0]) < BEGIN_OF_TEMP_VAR)
                         nxtEnv.name = m_parser.GetTokenInfo(paras[0])->text;
                     else nxtEnv.name = "anonymous_func:" + std::to_string(rids[0]);
                     for (int it = 0; it < prs->size(); it++) {
-                        if (HIDWORD(prs->at(it)) == 1)
+                        if (HIDWORD(prs->at(it)))
                             m_vm.RefVar(nxtEnv.varmap[rfi->paras[it]] = FindRealVar(prs->at(it), false));
                         else
                             nxtEnv.varmap[rfi->paras[it]] = prs->at(it);
@@ -442,9 +442,13 @@ int RuaRuntime::runCommand(RuaCommand i) {
         }
         else if (i.cmd == '.') {
             RuaVariable* pvar = m_vm.GetVar((rids[0]));
+            if (pvar->type != Class) {
+                EasyLog::Write("Runtime (error): can't get a member from a non-table variable.");
+                return ERROR;
+            }
             auto iter = pvar->data.c->find(LODWORD(paras[1]));
             if (iter == pvar->data.c->end()) {
-                uLL tt = COMBINE(1, nxtTempTokId());
+                uLL tt = COMBINE(3, nxtTempTokId());
                 pvar->data.c->insert(std::make_pair(LODWORD(paras[1]), tt));
                 TOPENV.varstk.push(tt);
             }
@@ -469,14 +473,22 @@ int RuaRuntime::runCommand(RuaCommand i) {
     return 0;
 }
 
-int RuaRuntime::nxtTempTokId()
+uint RuaRuntime::nxtTempTokId()
 {
-    auto result = m_global_env->varmap.find(m_nxt_temp_tok_id);
+    if (m_tmpTokCycQueue.empty()) {
+        return m_nxt_temp_tok_id++;
+    }
+    else {
+        uint ret = m_tmpTokCycQueue.front();
+        m_tmpTokCycQueue.pop_front();
+        return ret;
+    }
+    /*auto result = m_global_env->varmap.find(m_nxt_temp_tok_id);
     while (result != m_global_env->varmap.end() && m_nxt_temp_tok_id >= BEGIN_OF_TEMP_VAR) {
         if (m_nxt_temp_tok_id < BEGIN_OF_TEMP_VAR) m_nxt_temp_tok_id = BEGIN_OF_TEMP_VAR - 1;
         result = m_global_env->varmap.find(++m_nxt_temp_tok_id);
     }
-    return m_nxt_temp_tok_id++;
+    return m_nxt_temp_tok_id++;*/
 }
 
 void RuaRuntime::UnrefVar(uLL tok) {
@@ -484,16 +496,21 @@ void RuaRuntime::UnrefVar(uLL tok) {
     if (!id) return;
     RuaVariable* pvar = m_vm.GetVar(id);
     if (!pvar) return;
-    if (pvar->type == List && pvar->refCnt == 1) {
-        for (auto i : *pvar->data.l) {
-            UnrefVar(i);
-            m_global_env->varmap.erase(LODWORD(i));
+    if (pvar->refCnt == 1) {
+        if (pvar->type == List) {
+            for (auto i : *pvar->data.l) {
+                UnrefVar(i);
+                m_global_env->varmap.erase(LODWORD(i));
+            }
         }
-    }
-    else if (pvar->type == Class && pvar->refCnt == 1) {
-        for (auto i : *pvar->data.c) {
-            UnrefVar(i.second);
-            m_global_env->varmap.erase(i.second);
+        else if (pvar->type == Class) {
+            for (auto i : *pvar->data.c) {
+                UnrefVar(i.second);
+                m_global_env->varmap.erase(LODWORD(i.second));
+            }
+        }
+        if (LODWORD(tok) >= BEGIN_OF_TEMP_VAR) {
+            m_tmpTokCycQueue.push_back(LODWORD(tok));
         }
     }
     m_vm.UnrefVar(id);
@@ -503,13 +520,17 @@ int RuaRuntime::giveValue(uLL src, uLL dst)
 {
     uint rsrc = FindRealVar(src, false),
          rdst = FindRealVar(dst, false);
-    if ((dst >> 32) != 1) {
+    if ((dst >> 32) == 0) {
         EasyLog::Write("Runtime (error): left = must be variable.");
         return ERROR;
     }
     UnrefVar(rdst);
     if (HIDWORD(src) == 1)
         m_vm.RefVar(rsrc);
+    if (HIDWORD(dst) == 3) {
+        m_global_env->varmap[LODWORD(dst)] = LODWORD(rsrc);
+        return 0;
+    }
     auto iter = TOPENV.varmap.find(LODWORD(dst));
     if (iter == TOPENV.varmap.end()) {
         iter = m_global_env->varmap.find(LODWORD(dst));
@@ -535,7 +556,7 @@ RuaEnv* RuaRuntime::GetGlobalEnvironment()
 }
 
 uint RuaRuntime::FindRealVar(uLL tokid, bool tl) {
-    if (HIDWORD(tokid) == 0 && !tl) return LODWORD(tokid);
+    if ((HIDWORD(tokid) == 0 || HIDWORD(tokid) == 2) && !tl) return LODWORD(tokid);
     auto iter = TOPENV.varmap.find(LODWORD(tokid));
     if (iter != TOPENV.varmap.end()) return iter->second;
     iter = m_global_env->varmap.find(LODWORD(tokid));
@@ -592,10 +613,8 @@ void RuaRuntime::Run() {
     std::stack<uLL>& stk = m_env_stk.top().varstk;
     stk.push(COMBINE(1, tok_main->info)); stk.push(tid);
     runCommand({OPE_CALL, (uint)0});
-    printf("\n-------------------------\nProgram exited with ");
-    if (stk.empty()) printf("no exit code.");
-    else {
-        printf("return variable : %s", m_vm.to_string(FindRealVar(stk.top(), false)).c_str());
+    if (!stk.empty()) {
+        printf("\nRETURNED: %s", m_vm.to_string(FindRealVar(stk.top(), false)).c_str());
         UnrefVar(stk.top());
     }
 }

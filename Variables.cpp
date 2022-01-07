@@ -25,7 +25,7 @@ uint RuaVarManager::CopyVar(uint id) {
         EasyLog::Write("Error (VarManager): trying to copy class."); 
         return 0;
     case Function:
-        rd.f = new RuaFuncInfo(*rv->data.f); break;
+        rd.f = rv->data.f; break;
     default:
         return 0;
     }
@@ -109,8 +109,6 @@ void RuaVarManager::DeleteVar(uint idx) {
         delete pvar->data.l; break;
     case Class:
         delete pvar->data.c; break;
-    case Function:
-        delete pvar->data.f; break;
     default:
         break;
     }   
@@ -152,7 +150,7 @@ std::string RuaVarManager::to_string(uint id, bool full) {
         ret += ']';
         break;
     case Class:
-        ret += "Class";
+        ret += "Table";
         break;
     case Function:
         ret += "Function";
