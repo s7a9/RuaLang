@@ -1,0 +1,13 @@
+exec(read_file("file.rua"));
+exec(read_file("math.rua"));
+
+cube = function(x) {
+	return x * x * x;
+};
+
+main = function() {
+	x = binary_search(-5, 5, cube, 3, 1e-15);
+	fn = open("ans.txt");
+	fn.write_lines([str(x), str(e), str(exp(2))], "\n");
+	fn.close();
+};

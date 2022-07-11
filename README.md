@@ -1,21 +1,15 @@
 # RuaLang
-<<<<<<< HEAD
 C语言风格 / 类似Lua / 解释器
 =======
-C语言风格的Lua
->>>>>>> acc24f4428d8afd5f65d086dfe0df226bae131d3
-
--------
 
 ### 运行流程
 
-<<<<<<< HEAD
-1. 逐词读取文本，分析控制流程，将语句转为由压栈和计算符号等命令构成的后缀表达式，存入结构体ControlFlow。
+1. 逐词读取文本，分析控制流程，将语句转为由压栈和计算符号等命令构成的后缀表达式。
 2. 如果从文本中读取文件，则从main函数开始运行；如果以交互式运行，则直接运行代码。
 
 ### 程序示例
 
-**文件** 'E:\test.rua'
+**文件** 
 
     pow = function(a, n) { # 整数指数计算
        ret = 1;
@@ -37,19 +31,11 @@ C语言风格的Lua
 
 输出 （<>中内容代表键盘输入）
 
-    Loading from text: E:\test.rua
-    Preprocess finished in 0 sec.
-
     a=<99>
     b=<88>
     (a,b)=11
-    -------------------------
-    Program exited with return variable : { 87 : 1024 }
-    Finished in 3.796 sec. Press any key to exit.
 
 **交互式** （<>中内容代表键盘输入）
-
-    RuaLang VER 1.0
     
     >>> <for(i=0;i<5;i=i+1)print(i,"\t", i+1, "\n");>
     0       1
@@ -67,17 +53,17 @@ C语言风格的Lua
 ### 文档
 
 1.  控制语句
-    if, elif, else, return, break, continue, while, for 格式与C语言一致。
+    **if elif else return break continue while for** 格式与C语言一致。
 2.  变量
 
     | RuaLang变量类型 | 实际C语言类型 |
     | --- | --- |
     | Boolean | bool |
-    | Inteager | int |
-    | Float | double |
+    | Inteager | 64位整数 |
+    | Float | 64位浮点数 |
     | String | std::string |
     | List | std::vector |
-    | Class (TODO) | std::map |
+    | Table | std::map |
     | Function | struct |
 
 3.  函数
@@ -89,28 +75,76 @@ C语言风格的Lua
 4.  内置函数
 
     **print(para[, ...]) : void**
-    打印变量（暂不支持直接打印List变量）。
+    打印变量（不支持打印Table和Function）。
+
     **input(para[, ...]) : string**
-    打印传入变量（相当于print），接收命令行输入。
+    打印传入变量（相当于print）再接收命令行输入。
+
     **int(para)** **float(para)** **str(para)**
     类型转换
+
     **len(para : list) : integer**
     获取list长度
+
+    **read_file(filename : str)**
+    读取文件（文件必须存在）
+
+    **exist(filename : str)**
+    检查文件是否存在
+
+    **write_file(filename : str, content : str)**
+    向文件中写入内容
+
+    **exec(command : str)**
+    执行字符串所表示的代码
+
+    **is_null(object)**
+    判断变量是否为空
+
+    **append(list, item[, item1, ...])**
+    把变量加入数组中
+
+    **typeof(object)**
+    返回物体的类型（具体见./examples/math.rua中定义）
+
+    **exit([object])**
+    推出程序（展示传入的内容）
+
+    **str_to_list(str)**
+    把字符串转化为数组
+
+    **list_to_str(list)**
+    把数组转化为字符串
+
+    **breakpoint([object])**
+    设置断点（输出传入对象）
+
+    **\_id\_(object)**
+    展示对象的编号
+
+    **system(command : str)**
+    系统命令
+
+    **table()**
+    返回一个空Table
+
+    **randn()**
+    64位随机数
+
+    **remove(list, index : int[, index1, ...])**
+    移除列表中指定下标的内容
+
+    **sleep(milliseconds : int)**
+    挂起线程
 
 5.  运算符
         
         +  -  *  /  \(整除)  <<  >>  %
         <  >  <=  >=  ==  != 
+        = .
         &&  ||
         del(删除引用)  [](下标)
 
-6.  自建外部函数
-    （文档未完成）
 #### 注意事项
 -   层出不穷的BUG
--   Class、List和更多的内建函数正在完善。
 -   由于要将函数指针转为void*，程序无法通过g++正常编译，VISUAL C++ 2019编译通过。
-=======
-1. 逐词读取文本，在类Parser中，分析控制流程(if, elif, else, return, break, continue, while, for)，并将语句转为后缀表达式，存入结构体ControlFlow。
-
->>>>>>> acc24f4428d8afd5f65d086dfe0df226bae131d3

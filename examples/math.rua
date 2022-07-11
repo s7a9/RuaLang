@@ -1,0 +1,121 @@
+if (is_null(MATH_RUA)) {
+MATH_RUA = true;
+
+Type_NULL    = -1;
+Type_Boolean = 0;
+Type_Integer = 1;
+Type_Float   = 2;
+Type_String  = 3;
+Type_List    = 4;
+Type_Table   = 5;
+Type_Function= 6;
+
+Type_Name = ["Boolean", "Integer", "Float", "String", "List", "Table", "Function"];
+
+
+abs = function(x) {
+    if (x < 0) return 0 - x;
+    return x;
+};
+
+binary_search = function(begin, end, func, target, EPS){
+    while(true) {
+        mid = (begin + end) / 2.0;
+        value = func(mid);
+        diff = value - target;
+        if(abs(diff) < EPS) break;
+        if(diff > 0) end = mid;
+        else begin = mid;
+    }
+    return mid;
+};
+
+new_vector = function(dimension, inital_value){
+    l = [];
+    while (dimension) {
+        append(l, inital_value);
+        dimension = dimension - 1;
+    }
+    return l;
+};
+
+max = function(l) {
+    if (typeof(l) != Type_List)
+        exit("[max] Type of parameter is not a list!");
+    if (len(l) == 0)
+        exit("[max] No element in list.");
+    r = l[0];
+    for (i = 1; i < len(l); i = i + 1) if (l[i] > r)
+        r = l[i];
+    return r;
+};
+
+_new_matrix = function(idx, dimensions, inital_value) {
+    if (idx + 1 == len(dimensions))
+        return new_vector(dimensions[idx], inital_value);
+    if (typeof(dimensions[idx]) != Type_Integer)
+        exit("[new_matrix] Type of dimension is not an integer!");
+    l = [];
+    for (i = 0; i < dimensions[idx]; i = i + 1)
+        append(l, _new_matrix(idx + 1, dimensions, inital_value));
+    return l;
+};
+
+new_matrix = function(dimensions, inital_value) {
+    return _new_matrix(0, dimensions, inital_value);
+};
+
+EPS = 1e-20;
+
+exp = function(n) {
+    ans = 1.0;
+    nxt = 10.0;
+    i = 1;
+    facti = 1.0;
+    factn = float(n);
+    while(abs(nxt) > EPS) {
+        nxt =  factn / facti;
+        i = i + 1;
+        factn = factn * n;
+        facti = facti * i;
+        ans = ans + nxt;
+    }
+    return ans;
+};
+
+e = exp(1);
+
+ln = function(n) {
+    ans = 0.0;
+    nxt = 10.0;
+    if (n == 1) return 0.0;
+    else if (n > 1) neg = false;
+    else if (n <= 0) exit("ln x, x must larger than zero!");
+    else {
+        neg = true;
+        n = 1 / n;
+    }
+    reduced = 0;
+    while (n > 1.1) {
+        reduced = reduced + 1;
+        n = n / e;
+    } 
+    n = n - 1;
+    factn = float(n);
+    i = 1;
+    while (abs(nxt) > EPS) {
+        nxt = factn / i;
+        ans = ans + nxt;
+        i = - (i + 1);
+        factn = factn * n;
+    }
+    ans = ans + reduced;
+    if (neg) return -ans;
+    return ans;
+};
+
+pow = function(x, n) {
+    return exp(n * ln(x));
+};
+
+}

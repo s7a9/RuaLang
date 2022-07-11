@@ -1,0 +1,57 @@
+if (is_null(FILE_RUA)) {
+FILE_RUA = true;
+
+open = function(filename) {
+    fn = table();
+    fn.filename = filename;
+
+    if (exist(filename)) {
+        fn.content = read_file(filename);
+    }
+    else {
+        fn.content = "";
+    }
+
+    fn.write = function(self, line) {
+        self.content = self.content + line;
+    };
+
+    fn.write_lines = function(self, lines, sep) {
+        n = len(lines);
+        for (i = 0; i < n - 1; i = i + 1)
+            self.content = self.content + lines[i] + sep;
+        self.content = self.content + lines[n - 1];
+    };
+
+    fn.read = function(self) {
+        return self.content;
+    };
+
+    fn.read_lines = function(self) {
+        lines = [];
+        ctnt = str_to_list(self.content);
+        n = len(ctnt);
+        line = [];
+        for (i = 0; i < n; i = i + 1) {
+            if (ctnt[i] == 10) {
+                append(lines, list_to_str(line));
+                line = [];
+            }
+            else {
+                append(line, ctnt[i]);
+            }
+        }
+        if (len(line))
+            append(lines, list_to_str(line));
+        return lines;
+    };
+
+    fn.close = function(self) {
+        write_file(self.filename, self.content);
+        del self;
+    };
+
+    return fn;
+};
+
+}
